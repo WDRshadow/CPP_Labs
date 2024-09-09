@@ -1,8 +1,9 @@
-cmake_minimum_required(VERSION 3.29)
+cmake_minimum_required(VERSION 3.10)
 project(CPP_Labs)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(CPP_Labs main.cpp
-        algorithm/ASI.cpp
-        algorithm/ASI.h)
+        ASI.h
+        utest.h)
