@@ -1,12 +1,6 @@
-# Adaptive Simpson's Rule (ASI) Integration
+# Bucket quadtrees
 
-This project implements the Adaptive Simpson's Rule (ASI) for numerical integration in C++. It includes a class `ASI` that can integrate a given function over a specified interval with a given tolerance. The project also includes unit tests to verify the functionality of the `ASI` class.
-
-## Features
-
-- Adaptive Simpson's Rule for numerical integration
-- Customizable tolerance for integration
-- Unit tests using the `utest` framework
+A quadtree is a tree where each parent has four children: northwest (NW), northeast (NE), southwest (SW), and southeast (SE), called quadrants. In this section I implement the QuadTree class in a way similar to link-list. Each instance of class QuadTree is a node. Each node, if they are not the leaf node, will point to 4 other nodes representing northwest, northeast, southwest, and southeast. The construction and the query process is a recursive process. The search process includes pruning operations to improve search speed.
 
 ## Installation
 
@@ -21,6 +15,11 @@ This project implements the Adaptive Simpson's Rule (ASI) for numerical integrat
     cmake ..
     make
     ```
+   
+4. You may also need to move the data-set to the `build` folder:
+    ```sh
+    mv ../test_data/ ./
+    ```
 
 ## Usage
 
@@ -29,11 +28,11 @@ To run the main program, execute the following command from the `build` director
 ./CPP_Labs
 ```
 
-The main program integrates the function ( f(x) = x + \cos(x^5) ) over the interval ([0, \pi]) with different tolerances and prints the results.  
+The main program will read points from the data set `swe.csv` and generate the plot files. Then it will also run the tests function that get the result below.
 
 ## Testing
 
-Unit tests are included in the project to verify the functionality of the ASI class. To run the tests, execute the following command from the build directory:
+The project includes unit tests to verify if the `QuadTree` and `DirectSearch` class can run. To run the tests, use the following command from the build directory:
 
 ```sh
 ./CPP_Labs --utest
