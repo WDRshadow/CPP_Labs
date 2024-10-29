@@ -1,8 +1,8 @@
 #include <iostream>
-#include <functional>
 #include <cmath>
 
-#include "src/bucket_quadtrees.h"
+#include "src/bucket_quadtree.h"
+#include "src/direct_search.h"
 #include "src/utilities/utest.h"
 #include "src/utilities/point_reader.hpp"
 #include "src/utilities/timer.hpp"
@@ -82,7 +82,7 @@ void test_random_set()
     }
 }
 
-void test_query(std::vector<alg::Point> points, const alg::Rectangle& rect, int bucket_capacity)
+void test_query(const std::vector<alg::Point>& points, const alg::Rectangle& rect, int bucket_capacity)
 {
     // quadtree
     alg::QuadTree root(points, bucket_capacity);

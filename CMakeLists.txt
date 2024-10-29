@@ -10,4 +10,5 @@ add_executable(CPP_Labs main.cpp
         src/utilities/random_points.hpp
         src/utilities/timer.hpp
         src/utilities/utest.h
-        src/bucket_quadtrees.h)
+        src/bucket_quadtree.h
+        src/direct_search.h)
