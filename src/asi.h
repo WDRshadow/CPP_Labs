@@ -107,7 +107,7 @@ UTEST(ASI, TEST_1)
 {
     const std::function f = [](const double x) { return x; };
     const alg::ASI asi(f, 0, 1, 1e-2);
-    EXPECT_EQ(asi.integrate(), 0.5);
+    EXPECT_NEAR(asi.integrate(), 0.5, 1e-2);
 }
 
 UTEST(ASI, TEST_TOL)

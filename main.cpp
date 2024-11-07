@@ -1,18 +1,13 @@
 #include <iostream>
-#include <functional>
-#include <cmath>
 
-#include "src/asi.h"
-#include "src/bucket_quadtrees.h"
 #include "src/utilities/utest.h"
-#include "src/utilities/point_reader.hpp"
 #include "src/utilities/timer.hpp"
-#include "src/utilities/mpl_writer.hpp"
+#include "src/grid.h"
 
 UTEST_STATE();
 
-void assign_01();
-void assign_02();
+void assign_03();
+alg::Grid run_test(int num_elements, const alg::Domain& domain, alg::EquationCurve& bottom);
 
 int main(const int argc, const char* const argv[])
 {
@@ -21,78 +16,77 @@ int main(const int argc, const char* const argv[])
     {
         return utest_main(argc, argv);
     }
-    // assign_01();
-    assign_02();
+    assign_03();
 }
 
-void assign_01()
+class BottomCurve final : public alg::EquationCurve
 {
-    // define function for x + cos(x^5)
-    const std::function f = [](const double x) { return x + cos(pow(x, 5)); };
-    alg::ASI asi(f, 0, M_PI, 0);
-    constexpr double tol[3] = {1e-2, 1e-3, 1e-4};
-    for (const double i : tol)
+public:
+    [[nodiscard]] static double f(const double x)
     {
-        // counter for number of function evaluations
-        int counter = 0;
-        std::cout << "Tolerance: " << i << " Integrated value: " << asi.setTol(i).integrate(&counter) << " Counter: " <<
-            counter << std::endl;
+        return 1 / (2 * g(x));
+    }
+
+    [[nodiscard]] static double g(const double x)
+    {
+        if (x >= -10 && x < -3)
+        {
+            return 1 + std::exp(-3 * (x + 6));
+        }
+        if (x >= -3 && x <= 5)
+        {
+            return 1 + std::exp(3 * x);
+        }
+        throw std::invalid_argument("Invalid x");
+    }
+
+private:
+    [[nodiscard]] alg::Point gamma(const double t) const override
+    {
+        const auto x = (1 - t) * -10 + t * 5;
+        auto y = f(x);
+        return {x, y};
+    }
+};
+
+void assign_03()
+{
+    const auto bottomLeft = alg::Point(-10.0, 0.0);
+    const auto bottomRight = alg::Point(5.0, 0.0);
+    const auto topRight = alg::Point(5.0, 3.0);
+    const auto topLeft = alg::Point(-10.0, 3.0);
+    auto bottom = BottomCurve();
+    auto right = alg::StraightLine(bottomRight, topRight);
+    auto top = alg::StraightLine(topRight, topLeft);
+    auto left = alg::StraightLine(topLeft, bottomLeft);
+    const auto domain = alg::Domain(top, bottom, left, right);
+    const auto grid = run_test(100, domain, bottom);
+    grid.write_to_file("grid_x.txt", X_GRID);
+    grid.write_to_file("grid_y.txt", Y_GRID);
+    std::cout << "The grid is written to grid_x.txt and grid_y.txt. Please use `python plotdomain.py` to plot the grid."
+        << std::endl;
+    for (int i = 1; i < 5; i++)
+    {
+        const int num_elements = static_cast<int>(std::pow(10, i));
+        run_test(num_elements, domain, bottom);
     }
 }
 
-void assign_02()
+alg::Grid run_test(const int num_elements, const alg::Domain& domain, alg::EquationCurve& bottom)
 {
-    auto points = sf::readCsvPoints<alg::Point>("test_data/swelakes.csv");
-    alg::Point p1{2e5, 6e6};
-    alg::Point p2{5e5, 7e6};
-    alg::Rectangle rect{p1, p2};
-    // quadtree
-    alg::QuadTree root(points, 5000);
-    sf::MplWriter<alg::Point, alg::Rectangle> writer("plot.py");
-    std::vector<alg::QuadTree> queue{};
-    queue.push_back(root);
-    while (!queue.empty())
-    {
-        alg::QuadTree current = queue.back();
-        queue.pop_back();
-        if (!current.isLeaf)
-        {
-            queue.push_back(*current.topLeft);
-            queue.push_back(*current.topRight);
-            queue.push_back(*current.bottomLeft);
-            queue.push_back(*current.bottomRight);
-        }
-        else
-        {
-            writer << current.rect;
-            writer << current.points;
-        }
-    }
+    std::cout << "With num_elements = " << num_elements << std::endl;
+    std::cout << "Time to create grid with cache: ";
     sf::Timer timer;
+    bottom.setIsCache(true);
     timer.start();
-    std::vector<alg::Point> result{};
-    root.query(rect, result);
-    sf::MplWriter<alg::Point, alg::Rectangle> writer_query("plot_query.py");
-    writer_query << points;
-    writer_query << rect;
-    writer_query << result;
+    const auto grid = alg::Grid(domain, num_elements);
     timer.stop();
-
-    // direct search
-    alg::DirectSearch qt(points);
-    qt.divide(5000);
-    sf::MplWriter<alg::Point, alg::Rectangle> writer1("plot1.py");
-    for (auto r : qt.getResult())
-    {
-        writer1 << std::get<0>(r);
-        writer1 << std::get<1>(r);
-    }
-    sf::Timer timer2;
-    timer2.start();
-    std::vector<alg::Point> result1 = qt.query(rect);
-    sf::MplWriter<alg::Point, alg::Rectangle> writer1_query("plot1_query.py");
-    writer1_query << points;
-    writer1_query << rect;
-    writer1_query << result1;
-    timer.stop();
+    std::cout << "Time to create grid without cache: ";
+    sf::Timer timer1;
+    bottom.setIsCache(false);
+    timer1.start();
+    const auto grid1 = alg::Grid(domain, num_elements);
+    timer1.stop();
+    return grid;
 }
+
