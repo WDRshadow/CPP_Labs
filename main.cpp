@@ -57,10 +57,10 @@ void assign_03()
     const auto topLeft = alg::Point(-10.0, 3.0);
     auto bottom = BottomCurve();
     auto right = alg::StraightLine(bottomRight, topRight);
-    auto top = alg::StraightLine(topRight, topLeft);
-    auto left = alg::StraightLine(topLeft, bottomLeft);
+    auto top = alg::StraightLine(topLeft, topRight);
+    auto left = alg::StraightLine(bottomLeft, topLeft);
     const auto domain = alg::Domain(top, bottom, left, right);
-    const auto grid = run_test(100, domain, bottom);
+    const auto grid = run_test(20, domain, bottom);
     grid.write_to_file("grid_x.txt", X_GRID);
     grid.write_to_file("grid_y.txt", Y_GRID);
     std::cout << "The grid is written to grid_x.txt and grid_y.txt. Please use `python plotdomain.py` to plot the grid."
@@ -75,6 +75,7 @@ void assign_03()
 alg::Grid run_test(const int num_elements, const alg::Domain& domain, alg::EquationCurve& bottom)
 {
     std::cout << "With num_elements = " << num_elements << std::endl;
+    bottom.setDelta(1.0 / num_elements);
     std::cout << "Time to create grid with cache: ";
     sf::Timer timer;
     bottom.setIsCache(true);

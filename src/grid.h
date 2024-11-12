@@ -184,21 +184,57 @@ namespace alg
     class Grid
     {
     public:
-        int num_elements;
+        int num_nodes;
 
-        Grid(const Domain& domain, const int num_elements) : num_elements(num_elements)
+        Grid(const Domain& domain, const int num_nodes) : num_nodes(num_nodes)
         {
-            Eigen::MatrixXd grid_x(num_elements, num_elements);
-            Eigen::MatrixXd grid_y(num_elements, num_elements);
-            const double h = 1.0 / (num_elements - 1);
-            for (int i = 0; i < num_elements; i++)
+            Eigen::MatrixXd grid_x(num_nodes, num_nodes);
+            Eigen::MatrixXd grid_y(num_nodes, num_nodes);
+            const double h = 1.0 / (num_nodes - 1);
+
+            // Set the boundary
+            for (int i = 0; i < num_nodes; i++)
             {
-                const auto line_y = StraightLine(domain.top.at(i * h), domain.bottom.at(i * h));
-                const auto line_x = StraightLine(domain.left.at(i * h), domain.right.at(i * h));
-                for (int j = 0; j < num_elements; j++)
+                // Top boundary
+                const auto point_top_i = domain.top.at(i * h);
+                grid_x(num_nodes - 1, i) = point_top_i.x;
+                grid_y(num_nodes - 1, i) = point_top_i.y;
+
+                // Bottom boundary
+                const auto point_bottom_i = domain.bottom.at(i * h);
+                grid_x(0, i) = point_bottom_i.x;
+                grid_y(0, i) = point_bottom_i.y;
+
+                // Left boundary
+                const auto point_left_i = domain.left.at(i * h);
+                grid_x(i, 0) = point_left_i.x;
+                grid_y(i, 0) = point_left_i.y;
+
+                // Right boundary
+                const auto point_right_i = domain.right.at(i * h);
+                grid_x(i, num_nodes - 1) = point_right_i.x;
+                grid_y(i, num_nodes - 1) = point_right_i.y;
+            }
+
+            // Set the inner points using TFI
+            for (int i = 1; i < num_nodes - 1; i++)
+            {
+                for (int j = 1; j < num_nodes - 1; j++)
                 {
-                    grid_x(j, i) = line_x.at(j * h).x;
-                    grid_y(i, j) = line_y.at(j * h).y;
+                    const double s = static_cast<double>(i) / (num_nodes - 1);
+                    const double t = static_cast<double>(j) / (num_nodes - 1);
+
+                    const auto point_x = (1 - s) * grid_x(0, j) + s * grid_x(num_nodes - 1, j) +
+                        (1 - t) * grid_x(i, 0) + t * grid_x(i, num_nodes - 1) -
+                        ((1 - s) * (1 - t) * grid_x(0, 0) + s * (1 - t) * grid_x(num_nodes - 1, 0) +
+                            (1 - s) * t * grid_x(0, num_nodes - 1) + s * t * grid_x(num_nodes - 1, num_nodes - 1));
+                    grid_x(i, j) = point_x;
+
+                    const auto point_y = (1 - s) * grid_y(0, j) + s * grid_y(num_nodes - 1, j) +
+                        (1 - t) * grid_y(i, 0) + t * grid_y(i, num_nodes - 1) -
+                        ((1 - s) * (1 - t) * grid_y(0, 0) + s * (1 - t) * grid_y(num_nodes - 1, 0) +
+                            (1 - s) * t * grid_y(0, num_nodes - 1) + s * t * grid_y(num_nodes - 1, num_nodes - 1));
+                    grid_y(i, j) = point_y;
                 }
             }
             this->grid_x = grid_x;
@@ -222,11 +258,11 @@ namespace alg
             }
             std::ofstream file;
             file.open(filename);
-            for (int j = 0; j < num_elements; j++)
+            for (int i = 0; i < num_nodes; i++)
             {
-                for (int i = 0; i < num_elements; i++)
+                for (int j = 0; j < num_nodes; j++)
                 {
-                    file << (*grid)(i, j) << " ";
+                    file << (*grid)(num_nodes - 1 - i, j) << " ";
                 }
                 file << std::endl;
             }
@@ -253,5 +289,5 @@ UTEST(GRID, TEST)
     auto left = alg::StraightLine(topLeft, bottomLeft);
     const auto domain = alg::Domain(top, bottom, left, right);
     const auto grid = alg::Grid(domain, 20);
-    ASSERT_EQ(grid.num_elements, 20);
+    ASSERT_EQ(grid.num_nodes, 20);
 }
