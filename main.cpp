@@ -8,7 +8,7 @@
 
 UTEST_STATE();
 
-void assign_03();
+void assign_04();
 
 int main(const int argc, const char* const argv[])
 {
@@ -17,10 +17,10 @@ int main(const int argc, const char* const argv[])
     {
         return utest_main(argc, argv);
     }
-    assign_03();
+    assign_04();
 }
 
-void assign_03()
+void assign_04()
 {
     constexpr double b = 1.0;
     constexpr double dt = 0.001;
